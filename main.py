@@ -1,31 +1,55 @@
 import numpy as np
 import nnlayers
 import nnloss
+import nnoptimize
+import matplotlib.pyplot as plt
+from nnfs.datasets import spiral_data
 
-
-CLASS_SIZE = 3
-BATCH_SIZE = 3
+NUM_CLASSES = 3
+NUM_EPOCHS = 1001
+NUM_SAMPLES = 100
 NUM_OUTPUTS = 2
 
 
 def main():
     np.random.seed(0)
-    X, y = create_data(100, CLASS_SIZE, D=2)
+    X, y = spiral_data(NUM_SAMPLES, NUM_CLASSES)
 
-    layer_1 = nnlayers.LayerDense(2, 10)
-    layer_2 = nnlayers.LayerDense(layer_1.num_neurons, 10)
-    layer_3 = nnlayers.LayerDense(layer_2.num_neurons, 3, activation="softmax")
+    layers = (
+        nnlayers.LayerDense(2, 64),
+        nnlayers.LayerDense(64, NUM_CLASSES, activation="softmax")
+    )
+    loss = nnloss.Loss()
+    optimizer = nnoptimize.AdamAdaptiveMomentum(learning_rate=0.05, decay=5e-7)
 
-    layer_1.forward(X[:BATCH_SIZE]) # doing abatch of 3 for readability
+    losses = []
+    for epoch in range(NUM_EPOCHS):
+        print(f"epoch {epoch+1}/{NUM_EPOCHS}", end="\r")
+        # for batch in range(int(NUM_SAMPLES/BATCH_SIZE) + 1):
+        #     sample_num =  batch * BATCH_SIZE
+        #     sample_batch = X[sample_num : sample_num + BATCH_SIZE]
+        #     true_batch = y[sample_num : sample_num + BATCH_SIZE]
+            
+        layers[0].forward(X)
+        for layer_num in range(1, len(layers)):
+            layers[layer_num].forward(layers[layer_num-1].outputs)
 
-    layer_2.forward(layer_1.outputs)
+        loss.calc_loss(layers[-1].outputs, y)
+        losses.append(loss.batch_loss)
 
-    layer_3.forward(layer_2.outputs)
+        layers[-1].backwards(loss.gradients)
+        for layer_num in reversed(range(len(layers)-1)):
+            layers[layer_num].backwards(layers[layer_num+1].gradients)
 
-    loss = nnloss.Loss(layer_3.outputs, y[:BATCH_SIZE])
-    loss.calc_loss()
-
-    print(loss.batch_loss)
+        optimizer.pre_update()
+        for layer in layers:
+            optimizer.update_params(layer)
+        optimizer.post_update()
+    
+    print(f"final loss: {losses[-1]}")
+    plt.title("LOSS")
+    plt.plot(losses)
+    plt.show()
 
 
 def create_data(N, K, D=2): # taken from https://cs231n.github.io/neural-networks-case-study/
@@ -39,7 +63,6 @@ def create_data(N, K, D=2): # taken from https://cs231n.github.io/neural-network
         y[ix] = j
     
     return X, y
-
 
 
 if __name__ == "__main__":
