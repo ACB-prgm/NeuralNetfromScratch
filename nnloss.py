@@ -10,12 +10,15 @@ class Loss:
         self.der_loss = None
         self.gradients = None
     
-    def calc_loss(self, model_output, trues):
+    def calc_loss(self, model_output, trues, layers):
         self.predicted = model_output
         self.trues = trues
 
         self.batch_loss = np.mean(getattr(self, self.func)()) # averages the losses to represent the batch loss
-        self.gradients = getattr(self, f"der_{self.func}")()
+        for layer in layers:
+            self.batch_loss += layer.reg_loss
+
+        self.gradients = getattr(self, f"der_{self.func}")() # starts back propagation
 
     def categorical_cross_entropy(self):
         pred_clipped = np.clip(self.predicted, 1e-7, 1 - 1e-7) # ensures there are no values == 0 which would result in inf when log() used

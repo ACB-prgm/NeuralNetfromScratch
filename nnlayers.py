@@ -2,7 +2,8 @@ import numpy as np
 
 
 class LayerDense:
-    def __init__(self, num_inputs, num_neurons, activation="ReLU") -> None:
+    def __init__(self, num_inputs, num_neurons, activation="ReLU", 
+                wt_reg_l1=0.0, wt_reg_l2=0.0, bs_reg_l1=0.0, bs_reg_l2=0.0) -> None:
         self.num_inputs = num_inputs
         self.num_neurons = num_neurons
         self.activation = activation
@@ -14,12 +15,21 @@ class LayerDense:
 
         self.der_weights = None 
         self.der_biases = None 
-        self.der_inputs = None 
+        self.der_inputs = None
+
+        self.wt_reg_l1 = wt_reg_l1
+        self.wt_reg_l2 = wt_reg_l2
+        self.bs_reg_l1 = bs_reg_l1
+        self.bs_reg_l2 = bs_reg_l2
+        self.reg_loss = 0
 
     def forward(self, inputs):
         self.inputs = inputs # inputs from previous layer or sample inputs
         raw_outputs = np.dot(inputs, self.weights) + self.biases # (w0*i0 ... wnin) + bias
         self.outputs = getattr(self, self.activation)(raw_outputs) # activated outputs
+
+        self.reg_loss = self.regularization_loss()
+
 
     def backwards(self, gradients):        
         gradients = getattr(self, f"der_{self.activation}")(gradients) # takes the gradients from the previous layer 
@@ -27,8 +37,48 @@ class LayerDense:
 
         self.der_biases = np.sum(gradients, axis=0, keepdims=True) # == gradient (bc d/dx of biases is always 1.0 bc it is a sum)
         self.der_weights = np.dot(self.inputs.T, gradients) # == inputs * gradient (bc d/dw of w*i = i)
+
+        self.der_reg_loss()
+
         self.der_inputs = np.dot(gradients, self.weights.T) # == weights * gradient (bc d/di of w*i = w)
         self.gradients = self.der_inputs
+
+    def regularization_loss(self):
+        # calculates the regularization loss for a given layer.
+        # these are summed with the batch loss as a "penalty" for large weights and biases
+        # in order to prevent overfitting / reduce generalization error.
+        # L1 (linear) penalizes all weights/biases evenly, and thus can cause some to approach 0 and be muted 
+        #   - used for features selection (reduction of "unecessary" neurons)
+        # L2 (exp) penalizes larger weights/biases more than small ones, 
+        #   - used to increase accuracy in complex models by dispersing
+        reg_loss = 0
+
+        if self.wt_reg_l1:
+            reg_loss += self.wt_reg_l1 * np.sum(np.abs(self.weights))
+        if self.wt_reg_l2:
+            reg_loss += self.wt_reg_l2 * np.sum(self.weights * self.weights)
+        if self.bs_reg_l1:
+            reg_loss += self.bs_reg_l1 * np.sum(np.abs(self.biases))
+        if self.bs_reg_l2:
+            reg_loss += self.bs_reg_l2 * np.sum(self.biases * self.biases)
+
+        return reg_loss
+
+    def der_reg_loss(self):
+        # Gradients on regularization
+        if self.wt_reg_l1: # l1' = w>0 -> 1 || w<0 -> -1 
+            dL1 = np.ones_like(self.weights)
+            dL1[self.weights < 0] = -1
+            self.der_weights += self.wt_reg_l1 * dL1
+        if self.wt_reg_l2: # l2' = 2 * λ * weights
+            self.der_weights += 2 * self.wt_reg_l2 * self.weights
+        if self.bs_reg_l1:
+            dL1 = np.ones_like(self.biases)
+            dL1[self.biases < 0] = -1
+            self.der_biases += self.bs_reg_l1 * dL1
+        if self.bs_reg_l2:
+            self.der_biases += 2 * self.bs_reg_l2 * self.biases
+
 
     def ReLU(self, raw_outputs):
         # applies the ReLU activation function to all raw outputs.

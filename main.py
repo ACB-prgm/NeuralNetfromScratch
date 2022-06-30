@@ -14,13 +14,14 @@ NUM_OUTPUTS = 2
 def main():
     np.random.seed(0)
     X, y = spiral_data(NUM_SAMPLES, NUM_CLASSES)
+    Xt, yt = spiral_data(NUM_SAMPLES, NUM_CLASSES)
 
     layers = (
         nnlayers.LayerDense(2, 64),
         nnlayers.LayerDense(64, NUM_CLASSES, activation="softmax")
     )
     loss = nnloss.Loss()
-    optimizer = nnoptimize.AdamAdaptiveMomentum(learning_rate=0.05, decay=5e-7)
+    optimizer = nnoptimize.AdamAdaptiveMomentum()
 
     losses = []
     for epoch in range(NUM_EPOCHS):
@@ -34,7 +35,7 @@ def main():
         for layer_num in range(1, len(layers)):
             layers[layer_num].forward(layers[layer_num-1].outputs)
 
-        loss.calc_loss(layers[-1].outputs, y)
+        loss.calc_loss(layers[-1].outputs, y, layers)
         losses.append(loss.batch_loss)
 
         layers[-1].backwards(loss.gradients)

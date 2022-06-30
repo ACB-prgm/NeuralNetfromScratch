@@ -2,7 +2,7 @@ import numpy as np
 
 
 class StochasticGradientDecent:
-    def __init__(self, learning_rate=1.0, decay=0.0, momentum=0.0) -> None:
+    def __init__(self, learning_rate=0.01, decay=0.5, momentum=0.9) -> None:
         self.learning_rate = learning_rate # essentially the step size for gradient decent
         self.current_lr = learning_rate
         self.decay = decay # the amount / rate of decay of the lr so that steps become smaller near global minima
@@ -42,7 +42,7 @@ class AdamAdaptiveMomentum:
     # similar to SGD w/ momentum, but with an lr adapted for each individual perameter
     # this makes changes in learning rate smoother individually and more cohesive globally
     # also utilizes beta to "warm up" faster with the initial steps
-    def __init__(self, learning_rate=0.001, decay=0., epsilon=1e-7, beta_1=0.9, beta_2=0.999):
+    def __init__(self, learning_rate=0.1, decay=1e-6, epsilon=1e-7, beta_1=0.9, beta_2=0.999):
         self.learning_rate = learning_rate
         self.current_lr = learning_rate
         self.decay = decay
