@@ -38,7 +38,7 @@ class Loss:
         # If labels are sparse, turn them into one-hot vector
         if len(self.trues.shape) == 1:
             self.trues = np.eye(len(self.predicted[0]))[self.trues]
-        
+
         return (-self.trues / self.predicted) / len(self.trues) # we div by # samples to normalize the gradient for the optimizer
 
     def binary_cross_entropy(self):

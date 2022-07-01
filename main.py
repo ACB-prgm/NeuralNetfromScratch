@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from nnfs.datasets import spiral_data
 
 NUM_CLASSES = 3
-NUM_EPOCHS = 1001
+NUM_EPOCHS = 10001
 NUM_SAMPLES = 100
 NUM_OUTPUTS = 2
 
@@ -14,18 +14,18 @@ NUM_OUTPUTS = 2
 def main():
     np.random.seed(0)
     X, y = spiral_data(NUM_SAMPLES, NUM_CLASSES)
-    Xt, yt = spiral_data(NUM_SAMPLES, NUM_CLASSES)
 
     layers = (
-        nnlayers.LayerDense(2, 64),
+        nnlayers.LayerDense(2, 64, wt_reg_l2=5e-4, bs_reg_l2=5e-4),
         nnlayers.LayerDense(64, NUM_CLASSES, activation="softmax")
     )
     loss = nnloss.Loss()
-    optimizer = nnoptimize.AdamAdaptiveMomentum()
+    optimizer = nnoptimize.AdamAdaptiveMomentum(learning_rate=0.05, decay=5e-5)
 
+    # Test —————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
     losses = []
     for epoch in range(NUM_EPOCHS):
-        print(f"epoch {epoch+1}/{NUM_EPOCHS}", end="\r")
+        # print(f"epoch {epoch}/{NUM_EPOCHS}", end="\r")
         # for batch in range(int(NUM_SAMPLES/BATCH_SIZE) + 1):
         #     sample_num =  batch * BATCH_SIZE
         #     sample_batch = X[sample_num : sample_num + BATCH_SIZE]
@@ -34,7 +34,10 @@ def main():
         layers[0].forward(X)
         for layer_num in range(1, len(layers)):
             layers[layer_num].forward(layers[layer_num-1].outputs)
-
+        if not epoch % 100:
+            print("\nepoch:", epoch)
+            describe(layers[-1], y, loss.batch_loss)
+        
         loss.calc_loss(layers[-1].outputs, y, layers)
         losses.append(loss.batch_loss)
 
@@ -46,11 +49,32 @@ def main():
         for layer in layers:
             optimizer.update_params(layer)
         optimizer.post_update()
-    
-    print(f"final loss: {losses[-1]}")
+
+    # Validate ————————————————————————————————————————————————————————————————————————————————————————————————————————————————
+    Xt, yt = spiral_data(NUM_SAMPLES, NUM_CLASSES)
+
+    layers[0].forward(Xt)
+    for layer_num in range(1, len(layers)):
+        layers[layer_num].forward(layers[layer_num-1].outputs)
+
+    loss.calc_loss(layers[-1].outputs, yt, layers)
+
+    print("\nVALIDATION")
+    describe(layers[-1], yt, loss.batch_loss)
+
+    # LOSS PLOT ———————————————————————————————————————————————————————————————————————————————————————————————————————————————
     plt.title("LOSS")
     plt.plot(losses)
     plt.show()
+
+
+def describe(final_layer, y, loss):
+    predictions = np.argmax(final_layer.outputs, axis=1)
+    if len(y.shape) == 2:
+        y = np.argmax(y, axis=1)
+    accuracy = np.mean(predictions==y)
+
+    print(f"acc: {accuracy} | Loss: {loss}")
 
 
 def create_data(N, K, D=2): # taken from https://cs231n.github.io/neural-networks-case-study/

@@ -2,7 +2,7 @@ import numpy as np
 
 
 class LayerDense:
-    def __init__(self, num_inputs, num_neurons, activation="ReLU", 
+    def __init__(self, num_inputs, num_neurons, activation="ReLU", dropout=0.0,
                 wt_reg_l1=0.0, wt_reg_l2=0.0, bs_reg_l1=0.0, bs_reg_l2=0.0) -> None:
         self.num_inputs = num_inputs
         self.num_neurons = num_neurons
@@ -17,6 +17,8 @@ class LayerDense:
         self.der_biases = None 
         self.der_inputs = None
 
+        self.dropout = 1 - dropout
+        self.binary_mask = None
         self.wt_reg_l1 = wt_reg_l1
         self.wt_reg_l2 = wt_reg_l2
         self.bs_reg_l1 = bs_reg_l1
@@ -28,12 +30,17 @@ class LayerDense:
         raw_outputs = np.dot(inputs, self.weights) + self.biases # (w0*i0 ... wnin) + bias
         self.outputs = getattr(self, self.activation)(raw_outputs) # activated outputs
 
+        if self.dropout:
+            self.binary_mask = np.random.binomial(1, self.dropout, size=self.outputs.shape) / self.dropout
+            self.outputs *= self.binary_mask
+
         self.reg_loss = self.regularization_loss()
 
-
-    def backwards(self, gradients):        
-        gradients = getattr(self, f"der_{self.activation}")(gradients) # takes the gradients from the previous layer 
-        # and multiplies them by the derivative of the activation function.
+    def backwards(self, gradients):
+        if self.dropout:
+            gradients *= self.binary_mask
+          
+        gradients = getattr(self, f"der_{self.activation}")(gradients) # multiplies the gradients from the previous layer by the derivative of the activation function.
 
         self.der_biases = np.sum(gradients, axis=0, keepdims=True) # == gradient (bc d/dx of biases is always 1.0 bc it is a sum)
         self.der_weights = np.dot(self.inputs.T, gradients) # == inputs * gradient (bc d/dw of w*i = i)
@@ -88,6 +95,7 @@ class LayerDense:
     def der_ReLU(self, gradients):
         der_ReLU = gradients.copy()
         der_ReLU[self.raw_outputs <= 0] = 0
+        
         return der_ReLU
     
     def softmax(self, raw_outputs): # applies the softmax function to all raw outputs
