@@ -1,4 +1,3 @@
-from typing import final
 from nnfs.datasets import spiral_data
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,6 +6,7 @@ import nnlayers
 import nnloss
 import pathlib
 import pickle
+import nnfs
 import os
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent
@@ -18,6 +18,7 @@ NUM_OUTPUTS = 2
 
 
 def main():
+    nnfs.init()
     np.random.seed(0)
     X, y = spiral_data(NUM_SAMPLES, NUM_CLASSES)
     y = y.reshape(-1, 1)
