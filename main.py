@@ -11,7 +11,7 @@ import os
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent
 PICKLES_PATH = os.path.join(BASE_DIR, "NeuralNetfromScratch/pickles")
-NUM_EPOCHS = 10001
+NUM_EPOCHS = 10000
 NUM_SAMPLES = 100
 NUM_CLASSES = 2
 NUM_OUTPUTS = 2
@@ -32,7 +32,7 @@ def main():
 
     # TRAIN —————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
     losses = []
-    for epoch in range(NUM_EPOCHS):
+    for epoch in range(NUM_EPOCHS+1):
         # print(f"epoch {epoch}/{NUM_EPOCHS}", end="\r")
         # for batch in range(int(NUM_SAMPLES/BATCH_SIZE) + 1):
         #     sample_num =  batch * BATCH_SIZE
