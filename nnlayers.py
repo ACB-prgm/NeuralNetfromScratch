@@ -12,13 +12,12 @@ class LayerDense:
         self.inputs = None
         self.outputs = None
         self.raw_outputs = None
-
         self.der_weights = None 
         self.der_biases = None 
         self.der_inputs = None
 
-        self.dropout = 1 - dropout
         self.binary_mask = None
+        self.dropout = 1 - dropout
         self.wt_reg_l1 = wt_reg_l1
         self.wt_reg_l2 = wt_reg_l2
         self.bs_reg_l1 = bs_reg_l1
@@ -27,8 +26,8 @@ class LayerDense:
 
     def forward(self, inputs):
         self.inputs = inputs # inputs from previous layer or sample inputs
-        raw_outputs = np.dot(inputs, self.weights) + self.biases # (w0*i0 ... wnin) + bias
-        self.outputs = getattr(self, self.activation)(raw_outputs) # activated outputs
+        self.raw_outputs = np.dot(inputs, self.weights) + self.biases # (w0*i0 ... wnin) + bias
+        self.outputs = getattr(self, self.activation)(self.raw_outputs) # activated outputs
 
         if self.dropout:
             self.binary_mask = np.random.binomial(1, self.dropout, size=self.outputs.shape) / self.dropout
@@ -89,7 +88,6 @@ class LayerDense:
 
     def ReLU(self, raw_outputs):
         # applies the ReLU activation function to all raw outputs.
-        self.raw_outputs = raw_outputs
         return np.maximum(0, raw_outputs)
     
     def der_ReLU(self, gradients):
@@ -126,6 +124,9 @@ class LayerDense:
 
     def sigmoid(self, raw_outputs): # applies the signmoid function to all raw outputs
         # Function: https://en.wikipedia.org/wiki/Sigmoid_function
-        # sigmoid is used on the final output layer when the target has <=2 classes
         # it is paired with the Binary Cross Entropy loss calculation
-        return 1 / (1 + np.exp(-1 * raw_outputs))
+        
+        return 1 / (1 + np.exp(-raw_outputs))
+    
+    def der_sigmoid(self, gradients):
+        return gradients * self.outputs * (1 - self.outputs) # d/dsig = sig * (1 - sig)

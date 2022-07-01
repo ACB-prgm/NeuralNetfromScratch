@@ -42,7 +42,7 @@ class AdamAdaptiveMomentum:
     # similar to SGD w/ momentum, but with an lr adapted for each individual perameter
     # this makes changes in learning rate smoother individually and more cohesive globally
     # also utilizes beta to "warm up" faster with the initial steps
-    def __init__(self, learning_rate=0.1, decay=1e-6, epsilon=1e-7, beta_1=0.9, beta_2=0.999):
+    def __init__(self, learning_rate=0.001, decay=1e-6, epsilon=1e-7, beta_1=0.9, beta_2=0.999):
         self.learning_rate = learning_rate
         self.current_lr = learning_rate
         self.decay = decay
@@ -78,7 +78,7 @@ class AdamAdaptiveMomentum:
         layer.weights -= self.current_lr * wt_momentums_corrected / (np.sqrt(wt_cache_corrected) + self.eps)
         layer.biases -= self.current_lr * bs_momentums_corrected / (np.sqrt(bs_cache_corrected) + self.eps)
 
-        # So, as beta approaches 0 (by raising it to the power of # iters), weight_momentums will approach der_weights here, 
+        # As beta approaches 0 (by raising it to the power of # iters), weight_momentums will approach der_weights here, 
         # thus the corrected momentum will approach der_weights concurrently.  The corrected caches will approach the squared 
         # der_weights. Thus the weights are incremented by (lr * der_weights) / (der_weights + epsilon) which is essentially 
         # just incrementing by the lr as we minimize loss (which itself approaches 0 due to decay).
