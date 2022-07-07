@@ -75,8 +75,6 @@ def main():
     print("\nVALIDATION")
     describe(layers[-1], yt, loss.batch_loss, optimizer)
 
-    print(layers[-1].weights[:5])
-
     # LOSS PLOT ———————————————————————————————————————————————————————————————————————————————————————————————————————————————
     plt.title("LOSS")
     plt.plot(losses)
