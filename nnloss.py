@@ -15,7 +15,7 @@ class Loss:
         self.trues = trues
 
         self.batch_loss = np.mean(getattr(self, self.func)()) # averages the sample losses to represent the batch loss
-
+        
         for layer in layers:
             self.batch_loss += layer.reg_loss
 

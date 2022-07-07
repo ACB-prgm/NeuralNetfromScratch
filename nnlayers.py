@@ -7,7 +7,7 @@ class LayerDense:
         self.num_inputs = num_inputs
         self.num_neurons = num_neurons
         self.activation = activation
-        self.weights = 0.1 * np.random.standard_normal((num_inputs, num_neurons)) # creates weights for each neuron.  one weight for each input / input neuron
+        self.weights = 0.01 * np.random.standard_normal((num_inputs, num_neurons)) # creates weights for each neuron.  one weight for each input / input neuron
         self.biases = np.zeros((1, num_neurons)) # creates array of np.float zeros with length = num_neurons in layer
         self.inputs = None
         self.outputs = None
@@ -116,8 +116,7 @@ class LayerDense:
             single_output = single_output.reshape(-1, 1)
             # Calculate Jacobian matrix of the output
             jacobian_matrix = np.diagflat(single_output) - np.dot(single_output, single_output.T)
-            # Calculate sample-wise gradient
-            # and add it to the array of sample gradients
+            # Calculate sample-wise gradient and add it to the array of sample gradients
             der_softmax[index] = np.dot(jacobian_matrix, single_gradients)
         
         return der_softmax
@@ -125,7 +124,7 @@ class LayerDense:
     def sigmoid(self, raw_outputs): # applies the signmoid function to all raw outputs
         # Function: https://en.wikipedia.org/wiki/Sigmoid_function
         # it is paired with the Binary Cross Entropy loss calculation
-        
+
         return 1 / (1 + np.exp(-raw_outputs))
     
     def der_sigmoid(self, gradients):

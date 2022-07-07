@@ -16,7 +16,6 @@ NUM_SAMPLES = 100
 NUM_CLASSES = 2
 NUM_OUTPUTS = 2
 
-
 def main():
     nnfs.init()
     np.random.seed(0)
@@ -49,8 +48,9 @@ def main():
         losses.append(loss.batch_loss)
 
         if not epoch % 100:
-            print("\nepoch:", epoch)
-            describe(layers[-1], y, loss.batch_loss)
+            print("epoch:", epoch)
+            print(f"reg_loss: {sum([layer.reg_loss for layer in layers])}")
+            describe(layers[-1], y, loss.batch_loss, optimizer)
 
         # BACKWARD PASS
         layers[-1].backwards(loss.gradients)
@@ -73,7 +73,9 @@ def main():
     loss.calc_loss(layers[-1].outputs, yt, layers)
 
     print("\nVALIDATION")
-    describe(layers[-1], yt, loss.batch_loss)
+    describe(layers[-1], yt, loss.batch_loss, optimizer)
+
+    print(layers[-1].weights[:5])
 
     # LOSS PLOT ———————————————————————————————————————————————————————————————————————————————————————————————————————————————
     plt.title("LOSS")
@@ -81,17 +83,17 @@ def main():
     plt.show()
 
 
-def describe(final_layer, y, loss):
+def describe(final_layer, y, loss, optimizer):
     if final_layer.activation == "sigmoid":
         predictions = (final_layer.outputs > 0.5) * 1
     else:    
         predictions = np.argmax(final_layer.outputs, axis=1)
-
-    if len(y.shape) == 2:
-        y = np.argmax(y, axis=1)
+        if len(y.shape) == 2:
+            y = np.argmax(y, axis=1)
+    
     accuracy = np.mean(predictions==y)
 
-    print(f"acc: {accuracy} | Loss: {loss}")
+    print(f"acc: {accuracy:.3f} | Loss: {loss} | lr: {optimizer.current_lr}")
 
 
 if __name__ == "__main__":
