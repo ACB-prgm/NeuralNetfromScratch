@@ -7,6 +7,7 @@ import nnlayers
 import pathlib
 import nnloss
 import pickle
+import model
 import nnfs
 import os
 
@@ -119,4 +120,20 @@ def describe(final_layer, y, loss, optimizer):
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+
+    NN = model.Model()
+
+    NN.add_layer(nnlayers.LayerDense(2, 64))
+    NN.add_layer(nnlayers.LayerDense(64, 2, activation="softmax"))
+    NN.set_loss(nnloss.Loss(func="categorical_cross_entropy"))
+    NN.set_optimizer(nnoptimize.AdamAdaptiveMomentum(learning_rate=0.01, decay=1e-6))
+
+    nnfs.init()
+    np.random.seed(0)
+    X, y = nnfsds.spiral_data(NUM_SAMPLES, NUM_CLASSES)
+
+    NN.train(X, y, NUM_EPOCHS)
+
+    Xt, yt = nnfsds.spiral_data(NUM_SAMPLES, NUM_CLASSES)
+    NN.validate(Xt, yt)

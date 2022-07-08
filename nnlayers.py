@@ -24,19 +24,19 @@ class LayerDense:
         self.bs_reg_l2 = bs_reg_l2
         self.reg_loss = 0
 
-    def forward(self, inputs):
+    def forward(self, inputs, training=False):
         self.inputs = inputs # inputs from previous layer or sample inputs
         self.raw_outputs = np.dot(inputs, self.weights) + self.biases # (w0*i0 ... wnin) + bias
         self.outputs = getattr(self, self.activation)(self.raw_outputs) # activated outputs
 
-        if self.dropout:
+        if training and self.dropout:
             self.binary_mask = np.random.binomial(1, self.dropout, size=self.outputs.shape) / self.dropout
             self.outputs *= self.binary_mask
 
         self.reg_loss = self.regularization_loss()
 
-    def backwards(self, gradients):
-        if self.dropout:
+    def backwards(self, gradients, training=False):
+        if training and self.dropout:
             gradients *= self.binary_mask
           
         gradients = getattr(self, f"der_{self.activation}")(gradients) # multiplies the gradients from the previous layer by the derivative of the activation function.
