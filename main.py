@@ -1,17 +1,18 @@
-from nnfs.datasets import spiral_data
+from cProfile import label
 import matplotlib.pyplot as plt
+import nnfs.datasets as nnfsds
 import numpy as np
 import nnoptimize
 import nnlayers
-import nnloss
 import pathlib
+import nnloss
 import pickle
 import nnfs
 import os
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent
 PICKLES_PATH = os.path.join(BASE_DIR, "NeuralNetfromScratch/pickles")
-NUM_EPOCHS = 10000
+NUM_EPOCHS = 1000
 NUM_SAMPLES = 100
 NUM_CLASSES = 2
 NUM_OUTPUTS = 2
@@ -19,15 +20,19 @@ NUM_OUTPUTS = 2
 def main():
     nnfs.init()
     np.random.seed(0)
-    X, y = spiral_data(NUM_SAMPLES, NUM_CLASSES)
-    y = y.reshape(-1, 1)
+    X, y = nnfsds.spiral_data(NUM_SAMPLES, NUM_CLASSES)
+    # plt.scatter(X[:,0], y)
+    # plt.show()
+    # quit()
+    # X,y = nnfsds.sine_data()
+    # y = y.reshape(-1, 1) # for binary regression
 
     layers = (
-        nnlayers.LayerDense(2, 64, wt_reg_l2=5e-4, bs_reg_l2=5e-4),
-        nnlayers.LayerDense(64, 1, activation="sigmoid")
+        nnlayers.LayerDense(2, 64),
+        nnlayers.LayerDense(64, 2, activation="softmax")
     )
-    loss = nnloss.Loss(func="binary_cross_entropy")
-    optimizer = nnoptimize.AdamAdaptiveMomentum(learning_rate=0.001, decay=5e-7)
+    loss = nnloss.Loss(func="categorical_cross_entropy")
+    optimizer = nnoptimize.AdamAdaptiveMomentum(learning_rate=0.01, decay=1e-6) # decay=5e-7
 
     # TRAIN —————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
     losses = []
@@ -49,7 +54,6 @@ def main():
 
         if not epoch % 100:
             print("epoch:", epoch)
-            print(f"reg_loss: {sum([layer.reg_loss for layer in layers])}")
             describe(layers[-1], y, loss.batch_loss, optimizer)
 
         # BACKWARD PASS
@@ -62,9 +66,17 @@ def main():
             optimizer.update_params(layer)
         optimizer.post_update()
 
+    plt.scatter(X[:, 0], y, label="TRUE")
+    plt.scatter(X[:, 0], layers[-1].outputs[:, 0], label="PRED")
+    plt.title("TRAINING DATASET")
+    plt.legend()
+    plt.show()
+    plt.cla()
+
     # Validate ————————————————————————————————————————————————————————————————————————————————————————————————————————————————
-    Xt, yt = spiral_data(NUM_SAMPLES, NUM_CLASSES)
-    yt = y.reshape(-1, 1)
+    Xt, yt = nnfsds.spiral_data(NUM_SAMPLES, NUM_CLASSES)
+    # yt = y.reshape(-1, 1)
+    # Xt, yt = nnfsds.sine_data()
 
     layers[0].forward(Xt)
     for layer_num in range(1, len(layers)):
@@ -75,23 +87,35 @@ def main():
     print("\nVALIDATION")
     describe(layers[-1], yt, loss.batch_loss, optimizer)
 
-    # LOSS PLOT ———————————————————————————————————————————————————————————————————————————————————————————————————————————————
-    plt.title("LOSS")
-    plt.plot(losses)
+    plt.scatter(Xt[:, 0], yt, label="TRUE")
+    plt.scatter(Xt[:, 0], layers[-1].outputs[:, 0], label="PRED")
+    plt.title("VALIDATION DATASET")
+    plt.legend()
     plt.show()
+
+    # LOSS PLOT ———————————————————————————————————————————————————————————————————————————————————————————————————————————————
+    # plt.title("LOSS")
+    # plt.plot(losses)
+    # plt.show()
 
 
 def describe(final_layer, y, loss, optimizer):
-    if final_layer.activation == "sigmoid":
-        predictions = (final_layer.outputs > 0.5) * 1
-    else:    
+    if final_layer.activation == "softmax":    
         predictions = np.argmax(final_layer.outputs, axis=1)
         if len(y.shape) == 2:
             y = np.argmax(y, axis=1)
+        accuracy = np.mean(predictions==y)
     
-    accuracy = np.mean(predictions==y)
+    elif final_layer.activation == "sigmoid":
+        predictions = (final_layer.outputs > 0.5) * 1
+        accuracy = np.mean(predictions==y)
 
-    print(f"acc: {accuracy:.3f} | Loss: {loss} | lr: {optimizer.current_lr}")
+    elif final_layer.activation == "linear": # used with scalar values so must calc acc differently
+        tolerance = np.std(y) # tolerance or allowance is how much error is allowed (250 is arbitrary)
+        predictions = final_layer.outputs
+        accuracy = np.mean(np.absolute(predictions - y) < tolerance) # acc = the mean of the differences that are within the tolerance
+
+    print(f"acc: {accuracy:.3f} | Loss: {loss:.3f} | lr: {optimizer.current_lr:.3f}")
 
 
 if __name__ == "__main__":

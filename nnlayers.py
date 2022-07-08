@@ -96,12 +96,12 @@ class LayerDense:
         
         return der_ReLU
     
-    def Linear(self, raw_ouputs):
+    def linear(self, raw_ouputs):
         # Used on the final layer when targets are scalar values
         # it is paired with Mean Squared Error Loss or Mean Absolute Error
         return raw_ouputs # bc linear is y=x
     
-    def der_Linear(self, gradients): # derivative of y=x is 1
+    def der_linear(self, gradients): # derivative of y=x is 1
         return gradients.copy()
     
     def softmax(self, raw_outputs): # applies the softmax function to all raw outputs

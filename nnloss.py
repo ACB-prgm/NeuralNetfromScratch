@@ -58,3 +58,30 @@ class Loss:
         gradients = -(self.trues / pred_clipped - (1 - self.trues) / (1 - pred_clipped)) / len(self.predicted[0]) 
 
         return gradients / len(self.predicted)
+    
+    def mean_squared_error(self):
+        # (∑ (true - pred)**2) / num_outputs  ie == the mean of the squared differences of true and predicted values
+        return np.mean((self.trues - self.predicted)**2, axis=-1)
+
+    
+    def der_mean_squared_error(self):
+        num_samples = len(self.predicted)
+        num_outputs = len(self.predicted[0])
+
+        gradients = -2 * (self.trues - self.predicted) / num_outputs # ∂/∂x of (∑ (true - pred)**2) / num_outputs = -2 * (true-predicted) / num_outputs
+
+        return gradients / num_samples # normalize by number of samples
+    
+    def mean_absolute_error(self):
+        # like MSE, but less aggressive because it is linear rather than exponential.  
+        # It is used less frequently than MSE, but can also be paired with linear activation functions for scalar output
+        # (∑ |true - pred|) / num_outputs  ie == the mean of the abs(differences) of true and predicted values
+        return np.mean(np.abs(self.trues - self.predicted), axis=-1)
+    
+    def der_mean_absolute_error(self):
+        num_samples = len(self.predicted)
+        num_outputs = len(self.predicted[0])
+
+        gradients = -np.sign(self.trues - self.predicted) / num_outputs # ∂/∂x = -1/num_outputs * (1 if diff>0 and -1 if diff<0) (bc derivative of abs val)
+
+        return gradients / num_samples
