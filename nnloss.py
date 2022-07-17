@@ -49,6 +49,10 @@ class Loss:
         # used when each neuron represents two classes, yes/no typically. One neuron = cat or not cat, but could also represent cat or dog
         pred_clipped = np.clip(self.predicted, 1e-7, 1 - 1e-7) # ensures there are no values == 0 which would result in inf when log() used
         
+        
+        if len(self.trues.shape) == 1:
+            self.trues = np.eye(len(self.predicted[0]))[self.trues]
+
         sample_losses = -(self.trues * np.log(pred_clipped) + (1 - self.trues) * np.log(1 - pred_clipped)) # -1 * ( (true * log(pred)) + ((1-true) * log(1-pred)) )
 
         return np.mean(sample_losses, axis=-1)
