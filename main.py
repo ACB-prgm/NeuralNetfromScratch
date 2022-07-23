@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import Data_col.datasets as data
 import numpy as np
 import nnoptimize
 import nnlayers
@@ -16,7 +17,7 @@ NUM_CLASSES = 2
 NUM_OUTPUTS = 2
 
 def main():
-    # X, y , Xt, yt = get_spanish_data()
+    X, y , Xt, yt = data.get_spanish_data()
     
     NN = model.Model()
     NN.add_layer(nnlayers.LayerDense(3, 64, wt_reg_l2=5e-4, bs_reg_l2=5e-4))
