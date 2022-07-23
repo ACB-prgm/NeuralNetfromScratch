@@ -1,5 +1,5 @@
+import Data_col.datasets as datasets
 import matplotlib.pyplot as plt
-import nnfs.datasets as nnfsds
 import numpy as np
 import nnoptimize
 import nnlayers
@@ -18,12 +18,7 @@ NUM_CLASSES = 3
 NUM_OUTPUTS = 2
 
 def main():
-    X, y , Xt, yt = get_spanish_data()
-    X,y = nnfsds.spiral_data(NUM_SAMPLES, NUM_CLASSES)
-
-    print(X.shape)
-    print(Xt.shape)
-    quit()
+    X, y , Xt, yt = datasets.spanish_data()
 
 
     NN = model.Model()
@@ -59,45 +54,6 @@ def main():
     # plt.title("LOSS")
     # plt.plot(losses)
     # plt.show()
-
-
-def get_spanish_data():
-    FILE = "Data_col/spanish_nouns.pickle"
-    with open(os.path.join(BASE_DIR, FILE), "rb") as file:
-        raw = pickle.load(file)
-    
-    THES = ["el", "la"]
-    X = []
-    y = []
-    for word in raw:
-        word_split = word.split(" ")
-        if (any(map(word.__contains__, ("el/la", "del ", "al ", "los ", "las ")))) or len(word_split) > 2:
-            continue
-        
-        X.append(list(word_split[-1][-3:]))
-        y.append(THES.index(word_split[0]))
-    
-    X, y = (zip(*sorted(zip(X, y))))
-    
-    nval = int(len(X) * .1)
-    Xt, yt = X[:nval] + X[-nval:], y[:nval] + y[-nval:]
-
-    X = list(X)
-    y = list(y)
-    
-    del X[:nval]
-    del X[-nval:]
-    del y[:nval]
-    del y[-nval:]
-
-    X = np.array(X)
-    y = np.array(y)
-    Xt = np.array(Xt)
-    yt = np.array(yt)
-
-    
-
-    return (X, y, Xt, yt)
 
 
 if __name__ == "__main__":
