@@ -88,6 +88,7 @@ class LayerDense:
 
     def ReLU(self, raw_outputs):
         # applies the ReLU activation function to all raw outputs.
+        # used for hidden layers
         return np.maximum(0, raw_outputs)
     
     def der_ReLU(self, gradients):
@@ -104,9 +105,10 @@ class LayerDense:
     def der_linear(self, gradients): # derivative of y=x is 1
         return gradients.copy()
     
-    def softmax(self, raw_outputs): # applies the softmax function to all raw outputs
+    def softmax(self, raw_outputs): 
+        # applies the softmax function to all raw outputs
         # Function: https://en.wikipedia.org/wiki/Softmax_function
-        # softmax is used on the final output layer when the target has >2 classes
+        # softmax is used on the final output layer when the there is one correct category/class
         # it is paired with the Categorical Cross Entropy loss calculation
         
         exps = np.exp(raw_outputs - np.max(raw_outputs, axis=1, keepdims=True)) # eulers number (e) to outputh power to remove negatives while maintaining meaning
@@ -115,7 +117,7 @@ class LayerDense:
     
     def der_softmax(self, gradients):
         # You can actually combine the derivatives of the softmax and CCE loss to gain a 6-7x speed boost, but I will leave
-        # this as-is as this is just a learning exersize and I would have to break my class system.
+        # this as-is as this is just a learning exercize and I would have to break my class system.
         der_softmax = np.empty_like(gradients)
 
         # iterate sample-wise over pairs of the outputs and gradients, calculating the partial derivatives and applying the chain rule
