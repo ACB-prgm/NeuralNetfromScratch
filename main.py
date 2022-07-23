@@ -1,4 +1,3 @@
-from cProfile import label
 import matplotlib.pyplot as plt
 import nnfs.datasets as nnfsds
 import numpy as np
@@ -15,14 +14,21 @@ BASE_DIR = pathlib.Path(__file__).resolve().parent
 PICKLES_PATH = os.path.join(BASE_DIR, "NeuralNetfromScratch/pickles")
 NUM_EPOCHS = 1000
 NUM_SAMPLES = 100
-NUM_CLASSES = 2
+NUM_CLASSES = 3
 NUM_OUTPUTS = 2
 
 def main():
     X, y , Xt, yt = get_spanish_data()
+    X,y = nnfsds.spiral_data(NUM_SAMPLES, NUM_CLASSES)
+
+    print(X.shape)
+    print(Xt.shape)
+    quit()
+
+
     NN = model.Model()
 
-    NN.add_layer(nnlayers.LayerDense(2, 64))
+    NN.add_layer(nnlayers.LayerDense(NUM_CLASSES, 64))
     NN.add_layer(nnlayers.LayerDense(64, 2, activation="softmax"))
     NN.set_loss(nnloss.Loss(func="categorical_cross_entropy"))
     NN.set_optimizer(nnoptimize.AdamAdaptiveMomentum(learning_rate=0.01, decay=1e-6))
@@ -68,10 +74,10 @@ def get_spanish_data():
         if (any(map(word.__contains__, ("el/la", "del ", "al ", "los ", "las ")))) or len(word_split) > 2:
             continue
         
-        X.append(word_split[-1][-3:])
+        X.append(list(word_split[-1][-3:]))
         y.append(THES.index(word_split[0]))
     
-    X, y = (zip(*sorted(zip(y, X))))
+    X, y = (zip(*sorted(zip(X, y))))
     
     nval = int(len(X) * .1)
     Xt, yt = X[:nval] + X[-nval:], y[:nval] + y[-nval:]
@@ -88,6 +94,8 @@ def get_spanish_data():
     y = np.array(y)
     Xt = np.array(Xt)
     yt = np.array(yt)
+
+    
 
     return (X, y, Xt, yt)
 
