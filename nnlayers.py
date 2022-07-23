@@ -19,9 +19,9 @@ class LayerDense:
         self.binary_mask = None
         self.dropout = 1 - dropout
         self.wt_reg_l1 = wt_reg_l1
-        self.wt_reg_l2 = wt_reg_l2
+        self.wt_reg_l2 = wt_reg_l2 # 5e-4
         self.bs_reg_l1 = bs_reg_l1
-        self.bs_reg_l2 = bs_reg_l2
+        self.bs_reg_l2 = bs_reg_l2 # 5e-4
         self.reg_loss = 0
 
     def forward(self, inputs, training=False):

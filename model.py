@@ -40,7 +40,7 @@ class Model:
             self.forward(X, y, training=True)
             self.backward(training=True)
 
-            if print_every and not epoch % print_every:
+            if print_every and epoch % print_every == 0:
                 print("epoch:", epoch)
                 self.stats(y)
     
@@ -59,6 +59,8 @@ class Model:
     
         elif final_layer.activation == "sigmoid":
             predictions = (final_layer.outputs > 0.5) * 1
+            if len(y.shape) == 1:
+                y = np.eye(len(predictions[0]))[y]
             accuracy = np.mean(predictions==y)
 
         elif final_layer.activation == "linear": # used with scalar values so must calc acc differently
