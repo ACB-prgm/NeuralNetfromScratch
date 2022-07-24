@@ -1,9 +1,11 @@
+import pandas as pd
 import numpy as np
 import pickle
 import os
 
 
 BASE_DIR = os.path.dirname(__file__)
+MNIST_DIR = os.path.join(BASE_DIR, "FashionMNIST")
 
 
 
@@ -31,6 +33,7 @@ def spanish_data():
         del y[idx]
     
     y, X = (zip(* sorted(zip(y, X))))
+    
     X = list(X)
     y = list(y)
 
@@ -49,4 +52,23 @@ def spanish_data():
 
     return data
 
-spanish_data()
+def fashion_MNIST():
+    BASE_FILENAME = "fashion-mnist_X.csv"
+
+    df = pd.read_csv(os.path.join(MNIST_DIR, BASE_FILENAME.replace("X", "train")))
+    df2 = pd.read_csv(os.path.join(MNIST_DIR, BASE_FILENAME.replace("X", "train_2")))
+    df = pd.concat((df, df2)).reset_index().drop(df.columns[0], axis=1).apply(pd.to_numeric)
+    X, y = MNIST_from_df(df)
+
+    df = pd.read_csv(os.path.join(MNIST_DIR, BASE_FILENAME.replace("X", "test"))).apply(pd.to_numeric)
+    Xt, yt = MNIST_from_df(df)
+
+    return X, y, Xt, yt
+
+
+def MNIST_from_df(df):
+    y = df.pop("label")
+    y = np.eye(len(y), M=8)[y]
+    X = df.to_numpy()
+
+    return X, y
