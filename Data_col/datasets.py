@@ -8,7 +8,6 @@ BASE_DIR = os.path.dirname(__file__)
 MNIST_DIR = os.path.join(BASE_DIR, "FashionMNIST")
 
 
-
 def spanish_data():
     FILE = "spanish_nouns.pickle"
     with open(os.path.join(BASE_DIR, FILE), "rb") as file:
@@ -68,7 +67,7 @@ def fashion_MNIST():
 
 def MNIST_from_df(df):
     y = df.pop("label")
-    y = np.eye(len(y), M=8)[y]
-    X = df.to_numpy()
+    y = np.eye(len(y), M=10)[y]
+    X = (df.to_numpy(dtype=np.float32) - 127.5) / 127.5 # max is 255, so this will limit values -1 < X < 1
 
     return X, y
